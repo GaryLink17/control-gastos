@@ -22,6 +22,33 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-touch-callout: none !important;
+  tap-highlight-color: transparent !important;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+button,
+a,
+[role="button"],
+.nav-btn,
+.submit-btn,
+.toggle-btn,
+.category-tag,
+.transaction-item,
+.icon-option {
+  -webkit-tap-highlight-color: transparent !important;
+  tap-highlight-color: transparent !important;
+  outline: none !important;
+}
+
+button:focus,
+button:active,
+a:focus,
+a:active {
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
 }
 
 body {
@@ -29,7 +56,6 @@ body {
   background: var(--background);
   color: var(--text-primary);
   min-height: 100vh;
-  -webkit-tap-highlight-color: transparent;
 }
 
 .app {
