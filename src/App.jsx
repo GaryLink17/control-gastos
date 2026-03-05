@@ -8,7 +8,7 @@ const ICONS = {
 }
 
 function App() {
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState(undefined)
   const [transactions, setTransactions] = useState([])
   const [customCategories, setCustomCategories] = useState({ income: [], expense: [] })
   const [type, setType] = useState('expense')
@@ -25,6 +25,11 @@ function App() {
   const [newCategoryIcon, setNewCategoryIcon] = useState('📦')
   const [categoryMessage, setCategoryMessage] = useState('')
   const [selectedTransaction, setSelectedTransaction] = useState(null)
+
+    useEffect(() => {
+      const savedUser = localStorage.getItem('user')
+      setUser(savedUser ? JSON.parse(savedUser) : null)
+  }, [])
 
   useEffect(() => {
     if (!user) return
@@ -224,10 +229,13 @@ function App() {
   }
 
   const handleLogout = () => {
+    localStorage.removeItem('user')
     setUser(null)
     setTransactions([])
     setCustomCategories({ income: [], expense: [] })
   }
+
+  if (user === undefined) return null
 
   if (!user) {
     return <Auth onLogin={setUser} />

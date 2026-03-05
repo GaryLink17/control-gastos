@@ -75,7 +75,11 @@ export default function Auth({ onLogin }) {
           return
         }
 
-        onLogin({ id: user.id, username: user.username })
+        const loggedUser = { id: user.id, username: user.username }
+
+        localStorage.setItem('user', JSON.stringify(loggedUser))
+
+        onLogin(loggedUser)
       } else {
         const { data: existingUsers, error: checkError } = await supabase
           .from('users')
@@ -105,7 +109,16 @@ export default function Auth({ onLogin }) {
         if (insertError) throw insertError
 
         if (newUser && newUser.length > 0) {
-          onLogin({ id: newUser[0].id, username: newUser[0].username })
+          const loggedUser = { 
+              id: newUser[0].id, 
+              username: newUser[0].username 
+            }
+
+            console.log('Llamando onLogin con:', loggedUser)
+
+            localStorage.setItem('user', JSON.stringify(loggedUser))
+
+            onLogin(loggedUser)
         }
       }
     } catch (err) {
