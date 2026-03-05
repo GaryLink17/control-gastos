@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import Auth from './components/Auth'
+import { supabase } from './supabaseClient'
 
 const ICONS = {
   'Otro-Ingreso': '💵',
@@ -6,30 +8,9 @@ const ICONS = {
 }
 
 function App() {
-  const [transactions, setTransactions] = useState(() => {
-    try {
-      const saved = localStorage.getItem('expenses')
-      const parsed = saved ? JSON.parse(saved) : []
-      return Array.isArray(parsed) ? parsed : []
-    } catch {
-      return []
-    }
-  })
-  const [customCategories, setCustomCategories] = useState(() => {
-    try {
-      const saved = localStorage.getItem('customCategories')
-      const parsed = saved ? JSON.parse(saved) : null
-      if (parsed && typeof parsed === 'object' && parsed.expense !== undefined) {
-        return {
-          income: Array.isArray(parsed.income) ? parsed.income : [],
-          expense: Array.isArray(parsed.expense) ? parsed.expense : []
-        }
-      }
-      return { income: [], expense: [] }
-    } catch {
-      return { income: [], expense: [] }
-    }
-  })
+  const [user, setUser] = useState(null)
+  const [transactions, setTransactions] = useState([])
+  const [customCategories, setCustomCategories] = useState({ income: [], expense: [] })
   const [type, setType] = useState('expense')
   const [description, setDescription] = useState('')
   const [amount, setAmount] = useState('')
@@ -38,48 +19,70 @@ function App() {
   const [filterDate, setFilterDate] = useState('')
   const [filterMonth, setFilterMonth] = useState('')
   const [currentView, setCurrentView] = useState('register')
-  const [lastTransaction, setLastTransaction] = useState(() => {
-    try {
-      const saved = localStorage.getItem('lastTransaction')
-      return saved ? JSON.parse(saved) : null
-    } catch {
-      return null
-    }
-  })
+  const [lastTransaction, setLastTransaction] = useState(null)
   const [newCategoryName, setNewCategoryName] = useState('')
   const [newCategoryType, setNewCategoryType] = useState('expense')
   const [newCategoryIcon, setNewCategoryIcon] = useState('📦')
   const [categoryMessage, setCategoryMessage] = useState('')
   const [selectedTransaction, setSelectedTransaction] = useState(null)
 
-  const saveToLocalStorage = (key, value) => {
-    try {
-      localStorage.setItem(key, JSON.stringify(value))
-    } catch (e) {
-      console.error('Error saving to localStorage:', e)
+  useEffect(() => {
+    if (!user) return
+
+    const loadData = async () => {
+      try {
+        const { data: transactionsData } = await supabase
+          .from('transactions')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false })
+
+        if (transactionsData) {
+          setTransactions(transactionsData)
+          if (transactionsData.length > 0) {
+            setLastTransaction(transactionsData[0])
+          }
+        }
+
+        const { data: categoriesData } = await supabase
+          .from('categories')
+          .select('*')
+          .eq('user_id', user.id)
+
+        if (categoriesData) {
+          const income = categoriesData.filter(c => c.type === 'income').map(c => ({ name: c.name, icon: c.icon }))
+          const expense = categoriesData.filter(c => c.type === 'expense').map(c => ({ name: c.name, icon: c.icon }))
+          setCustomCategories({ income, expense })
+        }
+      } catch (err) {
+        console.error('Error loading data:', err)
+      }
     }
-  }
 
-  useEffect(() => {
-    saveToLocalStorage('expenses', transactions)
-  }, [transactions])
-
-  useEffect(() => {
-    saveToLocalStorage('customCategories', customCategories)
-  }, [customCategories])
-
-  useEffect(() => {
-    saveToLocalStorage('lastTransaction', lastTransaction)
-  }, [lastTransaction])
+    loadData()
+  }, [user])
 
   const allIncomeCategories = (customCategories.income || []).map(c => c.name)
   const allExpenseCategories = (customCategories.expense || []).map(c => c.name)
 
-  const addCategory = () => {
+  const addCategory = async () => {
     if (!newCategoryName.trim()) return
     
     const icon = newCategoryIcon || '📦'
     const newCat = { name: newCategoryName.trim(), icon }
+    
+    try {
+      await supabase
+        .from('categories')
+        .insert([{
+          user_id: user.id,
+          name: newCat.name,
+          icon: newCat.icon,
+          type: newCategoryType
+        }])
+    } catch (err) {
+      console.error('Error saving category:', err)
+    }
     
     if (newCategoryType === 'income') {
       setCustomCategories(prev => ({
@@ -99,7 +102,18 @@ function App() {
     setNewCategoryIcon('📦')
   }
 
-  const deleteCategory = (catName, catType) => {
+  const deleteCategory = async (catName, catType) => {
+    try {
+      await supabase
+        .from('categories')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('name', catName)
+        .eq('type', catType)
+    } catch (err) {
+      console.error('Error deleting category:', err)
+    }
+    
     if (catType === 'income') {
       setCustomCategories(prev => ({
         ...prev,
@@ -135,18 +149,6 @@ function App() {
     }
   }
 
-  const expensesByCategory = allExpenseCategories.map(cat => {
-    const catTransactions = transactions.filter(t => t.type === 'expense' && t.category === cat && typeof t.amount === 'number')
-    const total = catTransactions.reduce((sum, t) => sum + t.amount, 0)
-    return { category: cat, total, icon: getCategoryIcon(cat, 'expense'), isCustom: (customCategories.expense || []).some(c => c.name === cat) }
-  }).sort((a, b) => b.total - a.total)
-
-  const incomeByCategory = allIncomeCategories.map(cat => {
-    const catTransactions = transactions.filter(t => t.type === 'income' && t.category === cat && typeof t.amount === 'number')
-    const total = catTransactions.reduce((sum, t) => sum + t.amount, 0)
-    return { category: cat, total, icon: getCategoryIcon(cat, 'income'), isCustom: (customCategories.income || []).some(c => c.name === cat) }
-  }).sort((a, b) => b.total - a.total)
-
   const filteredTransactions = transactions.filter(t => {
     if (!t.date) return false
     const transactionDate = new Date(t.date)
@@ -168,7 +170,7 @@ function App() {
     return true
   })
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     
     const newErrors = {
@@ -185,11 +187,20 @@ function App() {
 
     const newTransaction = {
       id: Date.now().toString(),
+      user_id: user.id,
       type,
       description,
       amount: parseFloat(amount),
       category,
       date: new Date().toISOString()
+    }
+
+    try {
+      await supabase
+        .from('transactions')
+        .insert([newTransaction])
+    } catch (err) {
+      console.error('Error saving transaction:', err)
     }
 
     setTransactions([newTransaction, ...transactions])
@@ -198,10 +209,6 @@ function App() {
     setAmount('')
     setCategory('')
     setErrors({ description: false, amount: false, category: false })
-  }
-
-  const deleteTransaction = (id) => {
-    setTransactions(transactions.filter(t => t.id !== id))
   }
 
   const formatDate = (dateString) => {
@@ -216,15 +223,33 @@ function App() {
     return amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })
   }
 
+  const handleLogout = () => {
+    setUser(null)
+    setTransactions([])
+    setCustomCategories({ income: [], expense: [] })
+  }
+
+  if (!user) {
+    return <Auth onLogin={setUser} />
+  }
+
   return (
     <div className="app">
       <header className="header">
-        <h1>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-          </svg>
-          Control de Gastos
-        </h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h1>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+            Control de Gastos
+          </h1>
+          <button className="logout-btn" onClick={handleLogout}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+            </svg>
+            Salir
+          </button>
+        </div>
       </header>
 
       <nav className="nav-menu">
