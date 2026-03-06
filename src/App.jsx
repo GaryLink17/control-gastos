@@ -180,7 +180,7 @@ function App() {
         .limit(1);
 
       if (insertError) throw error;
-      if (data && data.length > 0) setTodos((prev) => [data[0], ...prev]);
+      if (createdTodo && createdTodo.length > 0) setTodos((prev) => [createdTodo[0], ...prev]);
     } catch (err) {
       console.error("Error adding todo:", err);
     }
