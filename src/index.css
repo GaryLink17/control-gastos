@@ -173,7 +173,7 @@ body {
 
 .header h1 {
   color: white;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -184,6 +184,13 @@ body {
 .header h1 svg {
   width: 28px;
   height: 28px;
+}
+
+.header .user-name {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: left;
+  margin-left: 40px;
 }
 
 .nav-menu {
