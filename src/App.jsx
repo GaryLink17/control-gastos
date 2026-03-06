@@ -185,8 +185,6 @@ function App() {
       console.error("Error adding todo:", err);
     }
 
-    setTodoMessage(`Tarea "${newTodoTitle.trim()}" creada`);
-    setTimeout(() => setTodoMessage(""), 3000);
     setNewTodoTitle("");
     setNewTodoCategory("");
   };
@@ -835,23 +833,6 @@ function App() {
                 onKeyDown={(e) => e.key === "Enter" && addTodo()}
                 placeholder="Ej: Pagar servicios"
               />
-            </div>
-
-            <div className="form-group">
-              <label>Vincular categoría (opcional)</label>
-              <select
-                value={newTodoCategory}
-                onChange={(e) => setNewTodoCategory(e.target.value)}
-              >
-                <option value="">Sin categoría</option>
-                {[...allIncomeCategories, ...allExpenseCategories].map(
-                  (cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ),
-                )}
-              </select>
             </div>
 
             <button type="button" className="submit-btn" onClick={addTodo}>
