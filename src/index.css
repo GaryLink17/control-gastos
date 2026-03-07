@@ -1112,3 +1112,20 @@ body {
   width: 16px;
   height: 16px;
 }
+
+.card-icon.saving {
+  background: rgba(245, 158, 11, 0.15);
+}
+
+.card-icon.saving svg {
+  color: #F59E0B;
+}
+
+.card-amount.saving {
+  color: #F59E0B;
+}
+
+.toggle-btn.saving.active {
+  background: #F59E0B;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}

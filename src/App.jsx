@@ -35,7 +35,8 @@ function App() {
   const [todos, setTodos] = useState([]);
   const [newTodoTitle, setNewTodoTitle] = useState("");
   const [newTodoCategory, setNewTodoCategory] = useState("");
-  const [todoMessage, setTodoMessage] = useState("");
+  const [currentCycle, setCurrentCycle] = useState([]);
+  const [lastIncome, setLastIncome] = useState(null);
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
@@ -91,6 +92,25 @@ function App() {
     loadData();
   }, [user]);
 
+  useEffect(() => {
+    const incomeTransactions = transactions
+      .filter((t) => t.type === "income")
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    const li = incomeTransactions[0] || null;
+    setLastIncome(li);
+
+    if (li) {
+      const liTime = new Date(li.date).getTime();
+      const cycle = transactions.filter((t) => 
+        new Date(t.date).getTime() >= liTime
+      );
+      setCurrentCycle(cycle);
+    } else {
+      setCurrentCycle([]);
+    }
+  }, [transactions]);
+  
   const allIncomeCategories = (customCategories.income || []).map(
     (c) => c.name,
   );
@@ -179,8 +199,9 @@ function App() {
         .select()
         .limit(1);
 
-      if (insertError) throw error;
-      if (createdTodo && createdTodo.length > 0) setTodos((prev) => [createdTodo[0], ...prev]);
+      if (insertError) throw insertError;
+      if (createdTodo && createdTodo.length > 0)
+        setTodos((prev) => [createdTodo[0], ...prev]);
     } catch (err) {
       console.error("Error adding todo:", err);
     }
@@ -225,15 +246,24 @@ function App() {
     return found ? found.icon : "📋";
   };
 
-  const income = transactions
-    .filter((t) => t.type === "income" && typeof t.amount === "number")
-    .reduce((sum, t) => sum + t.amount, 0);
+  // Calcular sobre el ciclo actual
+  const income = lastIncome ? lastIncome.amount : 0;
 
-  const expenses = transactions
+  const expenses = currentCycle
     .filter((t) => t.type === "expense" && typeof t.amount === "number")
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const balance = income - expenses;
+  // Ahorros del ciclo actual solamente
+  const savings = currentCycle
+    .filter((t) => t.type === "saving" && typeof t.amount === "number")
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  // Ahorros totales acumulados (para la tarjeta)
+  const totalSavings = transactions
+    .filter((t) => t.type === "saving" && typeof t.amount === "number")
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const balance = income - expenses - savings;
 
   const categories =
     type === "income" ? allIncomeCategories : allExpenseCategories;
@@ -446,18 +476,20 @@ function App() {
           <div className="card-amount balance">${formatAmount(balance)}</div>
         </div>
         <div className="card">
-          <div className="card-icon income">
+          <div className="card-icon saving">
             <svg
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
             >
-              <path d="M12 19V5M5 12l7-7 7 7" />
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 14v-4m0 0V8m0 4H8m4 0h4" />
             </svg>
           </div>
-          <div className="card-label">Ingresos</div>
-          <div className="card-amount income">${formatAmount(income)}</div>
+          <div className="card-label">Ahorro</div>
+          <div className="card-amount saving">
+            ${formatAmount(totalSavings)}
+          </div>
         </div>
         <div className="card">
           <div className="card-icon expense">
@@ -497,6 +529,15 @@ function App() {
                 }}
               >
                 Gasto
+              </button>
+              <button
+                className={`toggle-btn ${type === "saving" ? "active" : ""}`}
+                onClick={() => {
+                  setType("saving");
+                  setCategory("");
+                }}
+              >
+                Ahorro
               </button>
             </div>
             <form onSubmit={handleSubmit}>
@@ -575,7 +616,12 @@ function App() {
                 </p>
               )}
               <button type="submit" className="submit-btn">
-                Agregar {type === "income" ? "Ingreso" : "Gasto"}
+                Agregar{" "}
+                {type === "income"
+                  ? "Ingreso"
+                  : type === "expense"
+                    ? "Gasto"
+                    : "Ahorro"}
               </button>
             </form>
             {lastTransaction && (
@@ -819,10 +865,6 @@ function App() {
         {currentView === "todos" && (
           <div className="form-card">
             <h2 className="form-title">Tareas</h2>
-
-            {todoMessage && (
-              <div className="success-message">{todoMessage}</div>
-            )}
 
             <div className="form-group">
               <label>Nueva tarea</label>
