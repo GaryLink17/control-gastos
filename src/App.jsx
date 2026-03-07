@@ -35,8 +35,8 @@ function App() {
   const [todos, setTodos] = useState([]);
   const [newTodoTitle, setNewTodoTitle] = useState("");
   const [newTodoCategory, setNewTodoCategory] = useState("");
-  const [currentCycle, setCurrentCycle] = useState([]);
-  const [lastIncome, setLastIncome] = useState(null);
+  const [cycleIncome, setCycleIncome] = useState(0);
+  const [cycleStartDate, setCycleStartDate] = useState(null);
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
@@ -58,6 +58,13 @@ function App() {
           setTransactions(transactionsData);
           if (transactionsData.length > 0) {
             setLastTransaction(transactionsData[0]);
+          }
+          const lastIncomeTx = transactionsData
+            .filter((t) => t.type === "income")
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+          if (lastIncomeTx) {
+            setCycleIncome(lastIncomeTx.amount);
+            setCycleStartDate(lastIncomeTx.date);
           }
         }
 
@@ -92,25 +99,6 @@ function App() {
     loadData();
   }, [user]);
 
-  useEffect(() => {
-    const incomeTransactions = transactions
-      .filter((t) => t.type === "income")
-      .sort((a, b) => new Date(b.date) - new Date(a.date));
-    
-    const li = incomeTransactions[0] || null;
-    setLastIncome(li);
-
-    if (li) {
-      const liTime = new Date(li.date).getTime();
-      const cycle = transactions.filter((t) => 
-        new Date(t.date).getTime() >= liTime
-      );
-      setCurrentCycle(cycle);
-    } else {
-      setCurrentCycle([]);
-    }
-  }, [transactions]);
-  
   const allIncomeCategories = (customCategories.income || []).map(
     (c) => c.name,
   );
@@ -245,25 +233,32 @@ function App() {
     const found = all.find((c) => c.name === catName);
     return found ? found.icon : "📋";
   };
-
-  // Calcular sobre el ciclo actual
-  const income = lastIncome ? lastIncome.amount : 0;
-
-  const expenses = currentCycle
-    .filter((t) => t.type === "expense" && typeof t.amount === "number")
+  
+  // Calcular ciclos desde el último ingreso
+  const cycleExpenses = transactions
+    .filter((t) => {
+      if (t.type !== "expense" || typeof t.amount !== "number") return false;
+      if (!cycleStartDate) return false;
+      const txDate = new Date(t.date).getTime();
+      const startDate = new Date(cycleStartDate).getTime();
+      console.log('expense filter:', { txDate, startDate, result: txDate >= startDate });
+      return txDate >= startDate;
+    })
     .reduce((sum, t) => sum + t.amount, 0);
 
-  // Ahorros del ciclo actual solamente
-  const savings = currentCycle
-    .filter((t) => t.type === "saving" && typeof t.amount === "number")
+  const cycleSavings = transactions
+    .filter((t) => {
+      if (t.type !== "saving" || typeof t.amount !== "number") return false;
+      if (!cycleStartDate) return false;
+      return new Date(t.date).getTime() >= new Date(cycleStartDate).getTime();
+    })
     .reduce((sum, t) => sum + t.amount, 0);
 
-  // Ahorros totales acumulados (para la tarjeta)
   const totalSavings = transactions
     .filter((t) => t.type === "saving" && typeof t.amount === "number")
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const balance = income - expenses - savings;
+  const balance = cycleIncome - cycleExpenses - cycleSavings;
 
   const categories =
     type === "income" ? allIncomeCategories : allExpenseCategories;
@@ -340,8 +335,12 @@ function App() {
       console.error("Error saving transaction:", err);
     }
 
-    setTransactions([newTransaction, ...transactions]);
+    setTransactions((prev) => [newTransaction, ...prev]);
     setLastTransaction(newTransaction);
+    if (type === "income") {
+      setCycleIncome(parseFloat(amount));
+      setCycleStartDate(newTransaction.date);
+    }
     setDescription("");
     setAmount("");
     setCategory("");
@@ -503,7 +502,7 @@ function App() {
             </svg>
           </div>
           <div className="card-label">Gastos</div>
-          <div className="card-amount expense">${formatAmount(expenses)}</div>
+          <div className="card-amount expense">${formatAmount(cycleExpenses)}</div>
         </div>
       </div>
 
