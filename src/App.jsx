@@ -226,31 +226,34 @@ function App() {
   };
 
   // Calcular ciclos desde el último ingreso
-  const lastIncomeTx = [...transactions]
-  .filter((t) => t.type === "income")
-  .sort((a, b) => new Date(b.date) - new Date(a.date))[0] || null
+  const lastIncomeTx =
+    [...transactions]
+      .filter((t) => t.type === "income")
+      .sort((a, b) => new Date(b.date) - new Date(a.date))[0] || null;
 
-const cycleStartTime = lastIncomeTx ? new Date(lastIncomeTx.date).getTime() : null
+  const cycleStartTime = lastIncomeTx
+    ? new Date(lastIncomeTx.date).getTime()
+    : null;
 
-const cycleTransactions = cycleStartTime
-  ? transactions.filter((t) => new Date(t.date).getTime() >= cycleStartTime)
-  : []
+  const cycleTransactions = cycleStartTime
+    ? transactions.filter((t) => new Date(t.date).getTime() >= cycleStartTime)
+    : [];
 
-const cycleIncome = lastIncomeTx ? lastIncomeTx.amount : 0
+  const cycleIncome = lastIncomeTx ? lastIncomeTx.amount : 0;
 
-const cycleExpenses = cycleTransactions
-  .filter((t) => t.type === "expense" && typeof t.amount === "number")
-  .reduce((sum, t) => sum + t.amount, 0)
+  const cycleExpenses = cycleTransactions
+    .filter((t) => t.type === "expense" && typeof t.amount === "number")
+    .reduce((sum, t) => sum + t.amount, 0);
 
-const cycleSavings = cycleTransactions
-  .filter((t) => t.type === "saving" && typeof t.amount === "number")
-  .reduce((sum, t) => sum + t.amount, 0)
+  const cycleSavings = cycleTransactions
+    .filter((t) => t.type === "saving" && typeof t.amount === "number")
+    .reduce((sum, t) => sum + t.amount, 0);
 
-const totalSavings = transactions
-  .filter((t) => t.type === "saving" && typeof t.amount === "number")
-  .reduce((sum, t) => sum + t.amount, 0)
+  const totalSavings = transactions
+    .filter((t) => t.type === "saving" && typeof t.amount === "number")
+    .reduce((sum, t) => sum + t.amount, 0);
 
-const balance = cycleIncome - cycleExpenses - cycleSavings
+  const balance = cycleIncome - cycleExpenses - cycleSavings;
 
   const categories =
     type === "income" ? allIncomeCategories : allExpenseCategories;
@@ -322,14 +325,22 @@ const balance = cycleIncome - cycleExpenses - cycleSavings
     };
 
     try {
-      await supabase.from("transactions").insert([newTransaction]);
+      const { data: inserted, error } = await supabase
+        .from("transactions")
+        .insert([newTransaction])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const realTransaction = inserted || newTransaction;
+      setTransactions([realTransaction, ...transactions]);
+      setLastTransaction(realTransaction);
     } catch (err) {
       console.error("Error saving transaction:", err);
+      setTransactions([newTransaction, ...transactions]);
+      setLastTransaction(newTransaction);
     }
-
-    const updatedTransactions = [newTransaction, ...transactions];
-    setTransactions(updatedTransactions);
-    setLastTransaction(newTransaction);
 
     setDescription("");
     setAmount("");
