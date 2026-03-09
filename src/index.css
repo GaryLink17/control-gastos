@@ -190,7 +190,7 @@ body {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.8);
   text-align: left;
-  margin-left: 40px;
+  
 }
 
 .nav-menu {
@@ -1093,19 +1093,14 @@ body {
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
-  background: transparent;
+  background-color: #EF4444;
   border: none;
-  color: var(--text-secondary);
+  color: var(--card-bg);
   font-family: 'Outfit', sans-serif;
   font-size: 13px;
   cursor: pointer;
   border-radius: var(--radius-sm);
   transition: all 0.2s ease;
-}
-
-.logout-btn:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: var(--danger);
 }
 
 .logout-btn svg {

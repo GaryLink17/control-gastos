@@ -305,7 +305,7 @@ function App() {
     const newErrors = {
       description: false,
       amount: !amount || parseFloat(amount) <= 0,
-      category: !category,
+      category: type !== "saving" && !category, // Solo requiere categoría si no es ahorro
     };
 
     setErrors(newErrors);
@@ -387,17 +387,7 @@ function App() {
             alignItems: "center",
           }}
         >
-          <h1>
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-            </svg>
-            Control de Gastos
-          </h1>
+          <h1>Control de Gastos</h1>
           <button className="logout-btn" onClick={handleLogout}>
             <svg
               viewBox="0 0 24 24"
@@ -556,6 +546,7 @@ function App() {
                   className={errors.description ? "error" : ""}
                 />
               </div>
+
               <div className="form-row">
                 <div className="form-group">
                   <label>Monto</label>
@@ -572,44 +563,47 @@ function App() {
                     className={errors.amount ? "error" : ""}
                   />
                 </div>
-                <div className="form-group">
-                  <label>Categoría</label>
-                  <div className="select-with-btn">
-                    <select
-                      value={category}
-                      onChange={(e) => {
-                        if (e.target.value === "__add__") {
-                          setCurrentView("categories");
-                        } else {
-                          setCategory(e.target.value);
-                          setErrors((prev) => ({ ...prev, category: false }));
-                        }
-                      }}
-                      className={errors.category ? "error" : ""}
-                    >
-                      <option value="">Seleccionar</option>
-                      {categories.length === 0 ? (
-                        <option value="__add__" disabled>
-                          Agrega una categoría
-                        </option>
-                      ) : (
-                        categories.map((cat) => (
-                          <option key={cat} value={cat}>
-                            {cat}
+                {type !== "saving" && (
+                  <div className="form-group">
+                    <label>Categoria</label>
+                    <div className="select-with-btn">
+                      <select
+                        value={category}
+                        onChange={(e) => {
+                          if (e.target.value === "__add__") {
+                            setCurrentView("categories");
+                          } else {
+                            setCategory(e.target.value);
+                            setErrors((prev) => ({ ...prev, category: false }));
+                          }
+                        }}
+                        className={errors.category ? "error" : ""}
+                      >
+                        <option value="">Seleccionar</option>
+                        {categories.length === 0 ? (
+                          <option value="__add__" disabled>
+                            Agrega una categoria
                           </option>
-                        ))
-                      )}
-                    </select>
-                    <button
-                      type="button"
-                      className="add-category-btn-inline"
-                      onClick={() => setCurrentView("categories")}
-                    >
-                      +
-                    </button>
+                        ) : (
+                          categories.map((cat) => (
+                            <option key={cat.id} value={cat.id}>
+                              {cat.name}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                      <button 
+                        type="button"
+                        className="add-category-btn-inline"
+                        onClick={() => setCurrentView("categories")}
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
+
               {(errors.amount || errors.category) && (
                 <p className="error-message">
                   {categories.length === 0
