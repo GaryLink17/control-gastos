@@ -586,8 +586,8 @@ function App() {
                           </option>
                         ) : (
                           categories.map((cat) => (
-                            <option key={cat.id} value={cat.id}>
-                              {cat.name}
+                            <option key={cat} value={cat}>
+                              {cat}
                             </option>
                           ))
                         )}
