@@ -186,6 +186,12 @@ body {
   height: 28px;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .header .user-name {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.8);
@@ -1123,4 +1129,98 @@ body {
 .toggle-btn.saving.active {
   background: #F59E0B;
   box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+/* ===== MODO OSCURO ===== */
+:root.dark {
+  --primary: #3B82F6;
+  --primary-light: #60A5FA;
+  --primary-dark: #1E3A5F;
+  --accent: #60A5FA;
+  --success: #10B981;
+  --danger: #EF4444;
+  --background: #0F172A;
+  --card-bg: #1E293B;
+  --text-primary: #F1F5F9;
+  --text-secondary: #94A3B8;
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+
+.dark .header {
+  background: linear-gradient(135deg, #0D1B2A 0%, #1E293B 100%);
+}
+
+.dark .nav-menu {
+  background: #1E293B;
+  border-bottom: 1px solid #334155;
+}
+
+.dark .nav-btn:not(.active):hover {
+  background: #334155;
+}
+
+.dark .transaction-item:hover {
+  background: #334155;
+}
+
+.dark .form-group input,
+.dark .form-group select {
+  color: var(--text-primary);
+}
+
+.dark .modal-content {
+  background: #1E293B;
+}
+
+.dark .modal-header {
+  border-bottom: 1px solid #334155;
+}
+
+.dark .modal-detail {
+  border-bottom: 1px solid #334155;
+}
+
+.dark .icon-option {
+  color: var(--text-primary);
+}
+
+.dark .toggle-container {
+  background: #0F172A;
+}
+
+.dark .category-type-toggle {
+  background: #0F172A;
+}
+
+.dark .last-transaction {
+  border-top: 1px solid #334155;
+}
+
+.dark .auth-container {
+  background: linear-gradient(135deg, #0D1B2A 0%, #1E293B 100%);
+}
+
+.dark .auth-card {
+  background: #1E293B;
+}
+
+.dark .auth-toggle {
+  border-top: 1px solid #334155;
+}
+
+/* Botón modo oscuro */
+.dark-mode-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.dark-mode-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
 }

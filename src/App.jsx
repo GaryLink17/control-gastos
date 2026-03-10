@@ -35,6 +35,14 @@ function App() {
   const [todos, setTodos] = useState([]);
   const [newTodoTitle, setNewTodoTitle] = useState("");
   const [newTodoCategory, setNewTodoCategory] = useState("");
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem("darkMode") === "true";
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", darkMode);
+    localStorage.setItem("darkMode", darkMode);
+  }, [darkMode]);
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
@@ -388,17 +396,25 @@ function App() {
           }}
         >
           <h1>Control de Gastos</h1>
-          <button className="logout-btn" onClick={handleLogout}>
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
+          <div className="header-actions">
+            <button
+              className="dark-mode-btn"
+              onClick={() => setDarkMode(!darkMode)}
             >
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
-            </svg>
-            Salir
-          </button>
+              {darkMode ? "☀️" : "🌙"}
+            </button>
+            <button className="logout-btn" onClick={handleLogout}>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
+              </svg>
+              Salir
+            </button>
+          </div>
         </div>
         <div className="user-name">{user.username}</div>
       </header>
@@ -592,7 +608,7 @@ function App() {
                           ))
                         )}
                       </select>
-                      <button 
+                      <button
                         type="button"
                         className="add-category-btn-inline"
                         onClick={() => setCurrentView("categories")}
