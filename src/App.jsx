@@ -30,6 +30,7 @@ function App() {
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryType, setNewCategoryType] = useState("expense");
   const [newCategoryIcon, setNewCategoryIcon] = useState("📦");
+  const [showIcons, setShowIcons] = useState(false);
   const [categoryMessage, setCategoryMessage] = useState("");
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [todos, setTodos] = useState([]);
@@ -38,6 +39,8 @@ function App() {
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem("darkMode") === "true";
   });
+  const [closingTransaction, setClosingTransaction] = useState(false);
+  const [closingIcons, setClosingIcons] = useState(false);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
@@ -339,15 +342,16 @@ function App() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error guardando:", error);
+        return;
+      }
 
       const realTransaction = inserted || newTransaction;
       setTransactions([realTransaction, ...transactions]);
       setLastTransaction(realTransaction);
     } catch (err) {
       console.error("Error saving transaction:", err);
-      setTransactions([newTransaction, ...transactions]);
-      setLastTransaction(newTransaction);
     }
 
     setDescription("");
@@ -370,6 +374,22 @@ function App() {
   const formatAmount = (amount) => {
     if (typeof amount !== "number" || isNaN(amount)) return "0.00";
     return amount.toLocaleString("es-ES", { minimumFractionDigits: 2 });
+  };
+
+  const closeTransactionModal = () => {
+    setClosingTransaction(true);
+    setTimeout(() => {
+      setSelectedTransaction(null);
+      setClosingTransaction(false);
+    }, 200);
+  };
+
+  const closeIconsModal = () => {
+    setClosingIcons(true);
+    setTimeout(() => {
+      setShowIcons(false);
+      setClosingIcons(false);
+    }, 200);
   };
 
   const handleLogout = () => {
@@ -787,35 +807,44 @@ function App() {
 
               <div className="form-group">
                 <label>Icono</label>
-                <div className="icon-selector">
-                  {[
-                    "📦",
-                    "💰",
-                    "🛒",
-                    "🏠",
-                    "🚗",
-                    "💊",
-                    "🎬",
-                    "📄",
-                    "✈️",
-                    "🎮",
-                    "👕",
-                    "💡",
-                    "📱",
-                    "🎁",
-                    "🏥",
-                    "📚",
-                  ].map((icon) => (
-                    <button
-                      key={icon}
-                      type="button"
-                      className={`icon-option ${newCategoryIcon === icon ? "selected" : ""}`}
-                      onClick={() => setNewCategoryIcon(icon)}
-                    >
-                      {icon}
-                    </button>
-                  ))}
-                </div>
+                <button type="button" className="icon-picker-btn" onClick={() => setShowIcons(true)}>
+                  <span className="icon-picker-emoji">{newCategoryIcon}</span>
+                  <span className="icon-picker-text">Seleccionar</span>
+                </button>
+
+                {showIcons && (
+                  <div className={`icon-modal-overlay ${closingIcons ? "fade-out" : ""}`} onClick={closeIconsModal}>
+                    <div className={`icon-modal-content ${closingIcons ? "slide-down" : ""}`} onClick={(e) => e.stopPropagation()}>
+                      <div className="icon-modal-header">
+                        <span className="icon-modal-title">Seleccionar icono</span>
+                        <button type="button" className="icon-modal-close" onClick={closeIconsModal}>×</button>
+                      </div>
+                      <div className="icon-selector">
+                        {[
+                          "💵", "💰", "🏦", "📈", "📊", "🛒", "🏠", "🚗",
+                          "⛽", "🚌", "🚇", "✈️", "🚌", "💊", "🏥", "👨‍⚕️",
+                          "🎬", "🎮", "🎁", "🎒", "👕", "👟", "💄", "💇",
+                          "🐕", "🐱", "👶", "🎓", "📚", "✏️", "🏨", "☕",
+                          "🍔", "🍕", "🍺", "🎂", "📱", "💻", "🎧", "📷",
+                          "💡", "🔧", "🧹", "🧺", "💳", "📄", "🔒", "🎯",
+                          "⭐", "🔥", "💎", "🌈", "❤️", "🙏", "👏", "🎉",
+                        ].map((icon) => (
+                          <button
+                            key={icon}
+                            type="button"
+                            className={`icon-option ${newCategoryIcon === icon ? "selected" : ""}`}
+                            onClick={() => {
+                              setNewCategoryIcon(icon)
+                              closeIconsModal()
+                            }}
+                          >
+                            {icon}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <button
@@ -876,7 +905,7 @@ function App() {
         )}
         {currentView === "todos" && (
           <div className="form-card">
-            <h2 className="form-title">Tareas</h2>
+            <h2 className="form-title">Pendientes</h2>
 
             <div className="form-group">
               <label>Nueva tarea</label>
@@ -968,17 +997,17 @@ function App() {
 
       {selectedTransaction && (
         <div
-          className="modal-overlay"
-          onClick={() => setSelectedTransaction(null)}
+          className={`modal-overlay ${closingTransaction ? "fade-out" : ""}`}
+          onClick={closeTransactionModal}
         >
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className={`modal-content ${closingTransaction ? "slide-down" : ""}`} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <span className={`modal-type ${selectedTransaction.type}`}>
                 {selectedTransaction.type === "income" ? "Ingreso" : "Gasto"}
               </span>
               <button
                 className="modal-close"
-                onClick={() => setSelectedTransaction(null)}
+                onClick={closeTransactionModal}
               >
                 <svg
                   viewBox="0 0 24 24"

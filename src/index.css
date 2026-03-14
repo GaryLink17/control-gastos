@@ -774,10 +774,101 @@ body {
   border-radius: var(--radius-md);
 }
 
+.icon-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.icon-modal-content {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  width: 90%;
+  max-width: 360px;
+  max-height: 50vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.icon-picker-btn {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--background);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.icon-picker-btn:hover {
+  border-color: var(--primary);
+}
+
+.icon-picker-emoji {
+  font-size: 22px;
+}
+
+.icon-picker-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.icon-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.icon-modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.icon-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 4px;
+}
+
 .icon-selector {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
 }
 
 .icon-option {
@@ -881,6 +972,7 @@ body {
   justify-content: center;
   z-index: 1000;
   padding: 20px;
+  animation: fadeIn 0.2s ease;
 }
 
 .modal-content {
@@ -889,6 +981,7 @@ body {
   width: 100%;
   max-width: 360px;
   overflow: hidden;
+  animation: slideUp 0.3s ease;
 }
 
 .modal-header {
@@ -1185,6 +1278,11 @@ body {
   color: var(--text-primary);
 }
 
+.dark .icon-picker-btn {
+  background: #1E293B;
+  border-color: #334155;
+}
+
 .dark .toggle-container {
   background: #0F172A;
 }
@@ -1223,4 +1321,40 @@ body {
 
 .dark-mode-btn:hover {
   background: rgba(255, 255, 255, 0.1);
+}
+
+.modal-overlay.fade-out {
+  animation: fadeOut 0.2s ease forwards;
+}
+
+.modal-content.slide-down {
+  animation: slideDown 0.2s ease forwards;
+}
+
+.icon-modal-overlay.fade-out {
+  animation: fadeOut 0.2s ease forwards;
+}
+
+.icon-modal-content.slide-down {
+  animation: slideDown 0.2s ease forwards;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(20px);
+  }
 }

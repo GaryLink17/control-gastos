@@ -109,12 +109,28 @@ export default function Auth({ onLogin }) {
         if (insertError) throw insertError
 
         if (newUser && newUser.length > 0) {
+          const userId = newUser[0].id
           const loggedUser = { 
-              id: newUser[0].id, 
+              id: userId, 
               username: newUser[0].username 
             }
 
-            console.log('Llamando onLogin con:', loggedUser)
+            const defaultCategories = [
+              { name: 'Salario', type: 'income', icon: '💵', user_id: userId },
+              { name: 'Freelance', type: 'income', icon: '💻', user_id: userId },
+              { name: 'Inversiones', type: 'income', icon: '📈', user_id: userId },
+              { name: 'Otros Ingresos', type: 'income', icon: '💰', user_id: userId },
+              { name: 'Alimentación', type: 'expense', icon: '🛒', user_id: userId },
+              { name: 'Transporte', type: 'expense', icon: '🚗', user_id: userId },
+              { name: 'Servicios', type: 'expense', icon: '💡', user_id: userId },
+              { name: 'Entretenimiento', type: 'expense', icon: '🎬', user_id: userId },
+              { name: 'Salud', type: 'expense', icon: '🏥', user_id: userId },
+              { name: 'Shopping', type: 'expense', icon: '🛍️', user_id: userId },
+              { name: 'Educación', type: 'expense', icon: '📚', user_id: userId },
+              { name: 'Otros Gastos', type: 'expense', icon: '📦', user_id: userId },
+            ]
+
+            await supabase.from('categories').insert(defaultCategories)
 
             localStorage.setItem('user', JSON.stringify(loggedUser))
 
