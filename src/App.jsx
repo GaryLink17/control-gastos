@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Auth from "./components/Auth";
+import InstallPrompt from "./components/InstallPrompt";
 import { supabase } from "./supabaseClient";
 
 const ICONS = {
@@ -1063,6 +1064,7 @@ function App() {
           </div>
         </div>
       )}
+      <InstallPrompt />
     </div>
   );
 }

@@ -6,7 +6,11 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
+      injectRegister: 'auto',
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}']
+      },
       manifest: {
         name: 'Control de Gastos',
         short_name: 'Gastos',
@@ -14,17 +18,21 @@ export default defineConfig({
         theme_color: '#1E3A5F',
         background_color: '#F0F4F8',
         display: 'standalone',
+        orientation: 'portrait',
         start_url: '/',
+        categories: ['finance', 'productivity'],
         icons: [
           {
             src: 'icon-192.png',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
           },
           {
             src: 'icon-512.png',
             sizes: '512x512',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
           }
         ]
       }
