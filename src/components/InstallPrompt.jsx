@@ -1,55 +1,64 @@
 import { useState, useEffect } from 'react'
 
+let deferredPromptGlobal = null
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault()
+    deferredPromptGlobal = e
+  })
+}
+
 export default function InstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState(null)
-  const [showBanner, setShowBanner] = useState(false)
+  const [deferredPrompt, setDeferredPrompt] = useState(() => deferredPromptGlobal)
+  const [showBanner, setShowBanner] = useState(() => !!deferredPromptGlobal)
+
+  const isInstalled =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone ||
+    false
 
   useEffect(() => {
-    // Captura el evento que el navegador dispara cuando la app es instalable
+    if (isInstalled) return
+
+    if (deferredPromptGlobal) {
+      const timer = setTimeout(() => setShowBanner(true), 2000)
+      return () => clearTimeout(timer)
+    }
+
     const handler = (e) => {
-      // Previene que el navegador muestre su propio prompt automatico
       e.preventDefault()
-      // Guarda el evento para usarlo despues cuando el usuario quiera instalar
+      deferredPromptGlobal = e
       setDeferredPrompt(e)
-      // Muestra el banner despues de 2 segundos (para no interrumpir al usuario)
       setTimeout(() => setShowBanner(true), 2000)
     }
 
     window.addEventListener('beforeinstallprompt', handler)
-
-    // Limpia el listener cuando el componente se desmonta
     return () => window.removeEventListener('beforeinstallprompt', handler)
-  }, [])
+  }, [isInstalled])
 
   const handleInstall = async () => {
     if (!deferredPrompt) return
 
-    // Dispara el prompt nativo del navegador
     deferredPrompt.prompt()
 
-    // Espera la respuesta del usuario
     const { outcome } = await deferredPrompt.userChoice
 
     if (outcome === 'accepted') {
       console.log('App instalada')
     }
 
-    // Limpia el estado
     setDeferredPrompt(null)
     setShowBanner(false)
   }
 
   const handleDismiss = () => {
     setShowBanner(false)
-    // Guarda en localStorage para no volver a mostrarlo
     localStorage.setItem('installDismissed', 'true')
   }
 
-  // No mostrar si el usuario ya lo descarto
-  if (showBanner && localStorage.getItem('installDismissed') === 'true') {
-    return null
-  }
-
+  if (isInstalled) return null
+  if (localStorage.getItem('installDismissed') === 'true') return null
   if (!showBanner) return null
 
   return (

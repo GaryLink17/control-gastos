@@ -420,14 +420,12 @@ function App() {
     setCustomCategories({ income: [], expense: [] });
   };
 
-  if (user === undefined) return null;
-
-  if (!user || showResetPasswordForm) {
-    return <Auth showResetPasswordForm={showResetPasswordForm} setShowResetPasswordForm={setShowResetPasswordForm} />;
-  }
-
   return (
-    <div className="app">
+    <>
+      {user === undefined ? null : !user || showResetPasswordForm ? (
+        <Auth showResetPasswordForm={showResetPasswordForm} setShowResetPasswordForm={setShowResetPasswordForm} />
+      ) : (
+        <div className="app">
       <header className="header">
         <div
           style={{
@@ -1084,8 +1082,10 @@ function App() {
           </div>
         </div>
       )}
+        </div>
+      )}
       <InstallPrompt />
-    </div>
+    </>
   );
 }
 
