@@ -42,6 +42,7 @@ function App() {
   });
   const [closingTransaction, setClosingTransaction] = useState(false);
   const [closingIcons, setClosingIcons] = useState(false);
+  const [showResetPasswordForm, setShowResetPasswordForm] = useState(false);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
@@ -49,8 +50,28 @@ function App() {
   }, [darkMode]);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    setUser(savedUser ? JSON.parse(savedUser) : null);
+    const hash = window.location.hash;
+    const search = window.location.search;
+    const isRecovery = hash.includes("type=recovery") || search.includes("reset=true");
+
+    if (isRecovery) {
+      setShowResetPasswordForm(true);
+    }
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setShowResetPasswordForm(true);
+      }
+      setUser(session?.user ?? null);
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -393,17 +414,16 @@ function App() {
     }, 200);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    setUser(null);
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     setTransactions([]);
     setCustomCategories({ income: [], expense: [] });
   };
 
   if (user === undefined) return null;
 
-  if (!user) {
-    return <Auth onLogin={setUser} />;
+  if (!user || showResetPasswordForm) {
+    return <Auth showResetPasswordForm={showResetPasswordForm} setShowResetPasswordForm={setShowResetPasswordForm} />;
   }
 
   return (
@@ -437,7 +457,7 @@ function App() {
             </button>
           </div>
         </div>
-        <div className="user-name">{user.username}</div>
+        <div className="user-name">{user.email}</div>
       </header>
 
       <nav className="nav-menu">

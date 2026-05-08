@@ -1,29 +1,107 @@
 import { useState } from 'react'
 import { supabase } from '../supabaseClient'
 
-function hashPassword(password) {
-  let hash = 0
-  for (let i = 0; i < password.length; i++) {
-    const char = password.charCodeAt(i)
-    hash = ((hash << 5) - hash) + char
-    hash = hash & hash
-  }
-  return hash.toString(16)
-}
-
-export default function Auth({ onLogin }) {
+export default function Auth({ showResetPasswordForm, setShowResetPasswordForm }) {
   const [isLogin, setIsLogin] = useState(true)
-  const [username, setUsername] = useState('')
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [resetSuccess, setResetSuccess] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmNewPassword, setConfirmNewPassword] = useState('')
+  const [resetPasswordError, setResetPasswordError] = useState('')
+  const [resetPasswordLoading, setResetPasswordLoading] = useState(false)
 
   const validatePassword = (pass) => {
     if (pass.length < 8) {
       return 'La contraseña debe tener al menos 8 caracteres'
     }
     return null
+  }
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault()
+    setError('')
+    setResetSuccess(false)
+    setLoading(true)
+
+    if (!email.trim()) {
+      setError('Ingresa tu correo electrónico')
+      setLoading(false)
+      return
+    }
+
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/`,
+      })
+
+      if (resetError) throw resetError
+
+      setResetSuccess(true)
+    } catch (err) {
+      console.error('Forgot password error:', err)
+      setError(err.message || 'No se pudo enviar el link. Intenta de nuevo.')
+    }
+
+    setLoading(false)
+  }
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault()
+    setResetPasswordError('')
+    setResetPasswordLoading(true)
+
+    if (newPassword.length < 8) {
+      setResetPasswordError('La contraseña debe tener al menos 8 caracteres')
+      setResetPasswordLoading(false)
+      return
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      setResetPasswordError('Las contraseñas no coinciden')
+      setResetPasswordLoading(false)
+      return
+    }
+
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+      })
+
+      if (updateError) throw updateError
+
+      setShowResetPasswordForm(false)
+      window.history.replaceState({}, document.title, window.location.pathname)
+      window.location.reload()
+    } catch (err) {
+      console.error('Reset password error:', err)
+      setResetPasswordError(err.message || 'No se pudo actualizar la contraseña.')
+    }
+
+    setResetPasswordLoading(false)
+  }
+
+  const createDefaultCategories = async (userId) => {
+    const defaultCategories = [
+      { name: 'Salario', type: 'income', icon: '💵', user_id: userId },
+      { name: 'Freelance', type: 'income', icon: '💻', user_id: userId },
+      { name: 'Inversiones', type: 'income', icon: '📈', user_id: userId },
+      { name: 'Otros Ingresos', type: 'income', icon: '💰', user_id: userId },
+      { name: 'Alimentación', type: 'expense', icon: '🛒', user_id: userId },
+      { name: 'Transporte', type: 'expense', icon: '🚗', user_id: userId },
+      { name: 'Servicios', type: 'expense', icon: '💡', user_id: userId },
+      { name: 'Entretenimiento', type: 'expense', icon: '🎬', user_id: userId },
+      { name: 'Salud', type: 'expense', icon: '🏥', user_id: userId },
+      { name: 'Shopping', type: 'expense', icon: '🛍️', user_id: userId },
+      { name: 'Educación', type: 'expense', icon: '📚', user_id: userId },
+      { name: 'Otros Gastos', type: 'expense', icon: '📦', user_id: userId },
+    ]
+
+    await supabase.from('categories').insert(defaultCategories)
   }
 
   const handleSubmit = async (e) => {
@@ -44,105 +122,164 @@ export default function Auth({ onLogin }) {
       return
     }
 
-    if (!username.trim()) {
-      setError('El nombre de usuario es requerido')
+    if (!email.trim()) {
+      setError('El correo electrónico es requerido')
       setLoading(false)
       return
     }
 
     try {
       if (isLogin) {
-        const { data: users, error: fetchError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('username', username.trim())
-          .limit(1)
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        })
 
-        if (fetchError) throw fetchError
+        if (signInError) throw signInError
 
-        if (users.length === 0) {
+        if (!data.user) {
           setError('Usuario no encontrado')
           setLoading(false)
           return
         }
-
-        const user = users[0]
-        const hashedPassword = hashPassword(password)
-
-        if (user.password_hash !== hashedPassword) {
-          setError('Contraseña incorrecta')
-          setLoading(false)
-          return
-        }
-
-        const loggedUser = { id: user.id, username: user.username }
-
-        localStorage.setItem('user', JSON.stringify(loggedUser))
-
-        onLogin(loggedUser)
       } else {
         const { data: existingUsers, error: checkError } = await supabase
           .from('users')
-          .select('username')
-          .eq('username', username.trim())
+          .select('id')
+          .eq('email', email.trim())
           .limit(1)
 
         if (checkError) throw checkError
 
-        if (existingUsers.length > 0) {
-          setError('El nombre de usuario ya existe')
+        if (existingUsers && existingUsers.length > 0) {
+          setError('Este correo electrónico ya está registrado')
           setLoading(false)
           return
         }
 
-        const hashedPassword = hashPassword(password)
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+        })
 
-        const { data: newUser, error: insertError } = await supabase
-          .from('users')
-          .insert([{
-            username: username.trim(),
-            password_hash: hashedPassword
-          }])
-          .select()
-          .limit(1)
+        if (signUpError) throw signUpError
 
-        if (insertError) throw insertError
+        if (data.user) {
+          const { error: insertError } = await supabase
+            .from('users')
+            .insert([{
+              id: data.user.id,
+              email: email.trim(),
+            }])
 
-        if (newUser && newUser.length > 0) {
-          const userId = newUser[0].id
-          const loggedUser = { 
-              id: userId, 
-              username: newUser[0].username 
-            }
+          if (insertError) throw insertError
 
-            const defaultCategories = [
-              { name: 'Salario', type: 'income', icon: '💵', user_id: userId },
-              { name: 'Freelance', type: 'income', icon: '💻', user_id: userId },
-              { name: 'Inversiones', type: 'income', icon: '📈', user_id: userId },
-              { name: 'Otros Ingresos', type: 'income', icon: '💰', user_id: userId },
-              { name: 'Alimentación', type: 'expense', icon: '🛒', user_id: userId },
-              { name: 'Transporte', type: 'expense', icon: '🚗', user_id: userId },
-              { name: 'Servicios', type: 'expense', icon: '💡', user_id: userId },
-              { name: 'Entretenimiento', type: 'expense', icon: '🎬', user_id: userId },
-              { name: 'Salud', type: 'expense', icon: '🏥', user_id: userId },
-              { name: 'Shopping', type: 'expense', icon: '🛍️', user_id: userId },
-              { name: 'Educación', type: 'expense', icon: '📚', user_id: userId },
-              { name: 'Otros Gastos', type: 'expense', icon: '📦', user_id: userId },
-            ]
-
-            await supabase.from('categories').insert(defaultCategories)
-
-            localStorage.setItem('user', JSON.stringify(loggedUser))
-
-            onLogin(loggedUser)
+          await createDefaultCategories(data.user.id)
         }
       }
     } catch (err) {
       console.error('Auth error:', err)
-      setError('Error de conexión. Intenta de nuevo.')
+      setError(err.message || 'Error de conexión. Intenta de nuevo.')
     }
 
     setLoading(false)
+  }
+
+  if (showResetPasswordForm) {
+    return (
+      <div className="auth-container">
+        <div className="auth-card">
+          <div className="auth-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="auth-icon">
+              <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+            <h1>Nueva contraseña</h1>
+            <p>Ingresa tu nueva contraseña para continuar</p>
+          </div>
+
+          <form onSubmit={handleResetPassword} className="auth-form">
+            <div className="form-group">
+              <label>Nueva contraseña</label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Mínimo 8 caracteres"
+                disabled={resetPasswordLoading}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Confirmar contraseña</label>
+              <input
+                type="password"
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                placeholder="Repite la contraseña"
+                disabled={resetPasswordLoading}
+              />
+            </div>
+
+            {resetPasswordError && <div className="auth-error">{resetPasswordError}</div>}
+
+            <button type="submit" className="auth-submit" disabled={resetPasswordLoading}>
+              {resetPasswordLoading ? 'Actualizando...' : 'Actualizar contraseña'}
+            </button>
+          </form>
+        </div>
+      </div>
+    )
+  }
+
+  if (showForgotPassword) {
+    return (
+      <div className="auth-container">
+        <div className="auth-card">
+          <div className="auth-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="auth-icon">
+              <path d="M15 7a2 2 0 012 2v4m-4 4h4m-6-6V5a2 2 0 012-2h4a2 2 0 012 2v2m-6 6a3 3 0 106 0m-6 0a3 3 0 006 0"/>
+            </svg>
+            <h1>Recuperar contraseña</h1>
+            <p>Ingresa tu email y te enviaremos un link para restablecerla</p>
+          </div>
+
+          <form onSubmit={handleForgotPassword} className="auth-form">
+            <div className="form-group">
+              <label>Correo electrónico</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tucorreo@ejemplo.com"
+                disabled={loading}
+              />
+            </div>
+
+            {error && <div className="auth-error">{error}</div>}
+            {resetSuccess && <div className="auth-success">Link enviado! Revisa tu correo electronico</div>}
+
+            <button type="submit" className="auth-submit" disabled={loading}>
+              {loading ? 'Enviando...' : 'Enviar link de recuperación'}
+            </button>
+          </form>
+
+          <div className="auth-toggle">
+            <p>
+              <button type="button" onClick={() => { setShowForgotPassword(false); setError(''); setResetSuccess(false) }}>
+                ← Volver al login
+              </button>
+            </p>
+            {resetSuccess && (
+              <p>
+                <button type="button" onClick={() => { setResetSuccess(false) }}>
+                  Reenviar link
+                </button>
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -158,12 +295,12 @@ export default function Auth({ onLogin }) {
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
-            <label>Usuario</label>
+            <label>Correo electrónico</label>
             <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Ingresa tu usuario"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="tucorreo@ejemplo.com"
               disabled={loading}
             />
           </div>
@@ -201,9 +338,16 @@ export default function Auth({ onLogin }) {
 
         <div className="auth-toggle">
           {isLogin ? (
-            <p>¿No tienes cuenta? <button type="button" onClick={() => { setIsLogin(false); setError(''); setConfirmPassword('') }}>Regístrate</button></p>
+            <p>
+              <button type="button" className="forgot-password-link" onClick={() => { setShowForgotPassword(true); setError('') }}>
+                ¿Olvidaste tu contraseña?
+              </button>
+            </p>
           ) : (
             <p>¿Ya tienes cuenta? <button type="button" onClick={() => { setIsLogin(true); setError('') }}>Inicia sesión</button></p>
+          )}
+          {isLogin && (
+            <p>¿No tienes cuenta? <button type="button" onClick={() => { setIsLogin(false); setError(''); setConfirmPassword('') }}>Regístrate</button></p>
           )}
         </div>
       </div>
