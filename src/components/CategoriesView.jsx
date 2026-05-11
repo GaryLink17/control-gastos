@@ -57,10 +57,10 @@ export default function CategoriesView({
         {categoryMessage && (
           <div className="success-message">{categoryMessage}</div>
         )}
-          <div className='form-group'>
-            <label>Tipo de Categoria</label>
-        </div>
-        <div className="category-type-toggle" ref={toggleRef}>
+
+        <div className="form-group">
+            <label>Tipo de categoría</label>
+                    <div className="category-type-toggle" ref={toggleRef}>
           <div
             className="toggle-slider"
             style={{
@@ -82,6 +82,7 @@ export default function CategoriesView({
           >
             Gasto
           </button>
+        </div>
         </div>
 
         <div className="form-group">
