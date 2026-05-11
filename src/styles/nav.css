@@ -56,3 +56,12 @@
 .nav-btn:not(.active):hover {
   background: var(--background);
 }
+
+@media (max-width: 480px) {
+  .nav-btn {
+    flex-direction: column;
+    gap: 3px;
+    padding: 10px 4px;
+    font-size: 11px;
+  }
+}

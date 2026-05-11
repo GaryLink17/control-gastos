@@ -50,18 +50,17 @@ export default function HistoryView({
             onChange={handleFilterMonthChange}
           />
         </div>
-        {(filterDate || filterMonth) && (
-          <button
-            className="clear-filter-btn"
-            onClick={() => {
-              setFilterDate('')
-              setFilterMonth('')
-              setPage(1)
-            }}
-          >
-            Limpiar filtros
-          </button>
-        )}
+        <button
+          className="clear-filter-btn"
+          disabled={!filterDate && !filterMonth}
+          onClick={() => {
+            setFilterDate('')
+            setFilterMonth('')
+            setPage(1)
+          }}
+        >
+          Limpiar filtros
+        </button>
       </div>
       {loading ? (
         <div className="history-list">
