@@ -54,11 +54,13 @@ export default function InstallPrompt() {
 
   const handleDismiss = () => {
     setShowBanner(false)
-    localStorage.setItem('installDismissed', 'true')
+    localStorage.setItem('installDismissedAt', Date.now().toString())
   }
 
+  const dismissedAt = localStorage.getItem('installDismissedAt')
+  const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000
   if (isInstalled) return null
-  if (localStorage.getItem('installDismissed') === 'true') return null
+  if (dismissedAt && Date.now() - parseInt(dismissedAt, 10) < THIRTY_DAYS) return null
   if (!showBanner) return null
 
   return (

@@ -1,0 +1,21 @@
+.todos-list-container { margin-top: 1.5rem; }
+.todo-toggle { cursor: pointer; }
+.transaction-item.completed { opacity: 0.5; }
+.transaction-description.completed { text-decoration: line-through; }
+
+.todo-delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  transition: color 0.2s, background 0.2s;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  line-height: 1;
+}
+
+.todo-delete-btn:hover {
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.05);
+}

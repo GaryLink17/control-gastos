@@ -1,0 +1,15 @@
+.skeleton {
+  background: var(--text-secondary);
+  opacity: 0.15;
+  border-radius: var(--radius-sm);
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+.skeleton-card      { height: 80px; border-radius: var(--radius-md); }
+.skeleton-line      { height: 16px; margin-bottom: 8px; width: 60%; }
+.skeleton-line.short { width: 40%; }
+.skeleton-line.long  { width: 80%; }
+.skeleton-list-item { height: 64px; border-radius: var(--radius-sm); margin-bottom: 8px; }
+.skeleton-mb-12 { margin-bottom: 12px; }
+.skeleton-mb-16 { margin-bottom: 16px; }
+.skeleton-mb-24 { margin-bottom: 24px; }

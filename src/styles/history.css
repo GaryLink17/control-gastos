@@ -1,0 +1,190 @@
+.history-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+.history-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--primary);
+}
+
+.filter-container {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  align-items: flex-end;
+}
+
+.filter-group {
+  flex: 1;
+  position: relative;
+}
+
+.filter-group label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filter-group input {
+  width: 100%;
+  padding: 12px 14px;
+  padding-right: 40px;
+  border: 2px solid var(--background);
+  border-radius: var(--radius-sm);
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  background: var(--background);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.filter-group input:hover { border-color: var(--primary-light); }
+
+.filter-group input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
+}
+
+.filter-group input::-webkit-calendar-picker-indicator { display: none; }
+.filter-group input::-moz-calendar-picker-indicator { display: none; }
+
+.clear-filter-btn {
+  padding: 12px 16px;
+  background: var(--danger);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-filter-btn:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.transaction-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: var(--background);
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+  animation: fadeIn 0.3s ease;
+}
+
+.transaction-item:hover { background: #E5EBF0; }
+
+.transaction-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.transaction-icon.income  { background: rgba(16, 185, 129, 0.15); }
+.transaction-icon.expense { background: rgba(239, 68, 68, 0.15); }
+.transaction-icon.saving  { background: rgba(245, 158, 11, 0.15); }
+
+.transaction-icon svg { width: 20px; height: 20px; }
+.transaction-icon.income svg  { color: var(--success); }
+.transaction-icon.expense svg { color: var(--danger); }
+
+.transaction-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.transaction-description {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.transaction-category {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.transaction-right { text-align: right; }
+
+.transaction-amount {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.transaction-amount.income  { color: var(--success); }
+.transaction-amount.expense { color: var(--danger); }
+.transaction-amount.saving  { color: #F59E0B; }
+
+.transaction-date {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.load-more-btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  background: var(--card-bg);
+  border: 2px dashed var(--text-secondary);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.load-more-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.delete-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.delete-btn:hover { background: rgba(239, 68, 68, 0.15); }
+.delete-btn svg { width: 18px; height: 18px; color: var(--text-secondary); transition: color 0.2s ease; }
+.delete-btn:hover svg { color: var(--danger); }

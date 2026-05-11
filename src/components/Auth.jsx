@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 
-export default function Auth({ showResetPasswordForm, setShowResetPasswordForm }) {
+export default function Auth({ showResetPasswordForm, setShowResetPasswordForm, createDefaultCategories }) {
   const [isLogin, setIsLogin] = useState(true)
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   const [email, setEmail] = useState('')
@@ -14,6 +14,29 @@ export default function Auth({ showResetPasswordForm, setShowResetPasswordForm }
   const [confirmNewPassword, setConfirmNewPassword] = useState('')
   const [resetPasswordError, setResetPasswordError] = useState('')
   const [resetPasswordLoading, setResetPasswordLoading] = useState(false)
+  const [attempts, setAttempts] = useState(0)
+  const [cooldown, setCooldown] = useState(0)
+  const timerRef = useRef(null)
+  const MAX_ATTEMPTS = 5
+
+  useEffect(() => {
+    if (cooldown > 0) {
+      timerRef.current = setInterval(() => {
+        setCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timerRef.current)
+            return 0
+          }
+          return prev - 1
+        })
+      }, 1000)
+      return () => clearInterval(timerRef.current)
+    }
+  }, [cooldown])
+
+  const getCooldownTime = (attemptCount) => {
+    return Math.min(Math.pow(2, attemptCount - MAX_ATTEMPTS + 1), 60)
+  }
 
   const validatePassword = (pass) => {
     if (pass.length < 8) {
@@ -76,32 +99,12 @@ export default function Auth({ showResetPasswordForm, setShowResetPasswordForm }
 
       setShowResetPasswordForm(false)
       window.history.replaceState({}, document.title, window.location.pathname)
-      window.location.reload()
     } catch (err) {
       console.error('Reset password error:', err)
       setResetPasswordError(err.message || 'No se pudo actualizar la contraseña.')
     }
 
     setResetPasswordLoading(false)
-  }
-
-  const createDefaultCategories = async (userId) => {
-    const defaultCategories = [
-      { name: 'Salario', type: 'income', icon: '💵', user_id: userId },
-      { name: 'Freelance', type: 'income', icon: '💻', user_id: userId },
-      { name: 'Inversiones', type: 'income', icon: '📈', user_id: userId },
-      { name: 'Otros Ingresos', type: 'income', icon: '💰', user_id: userId },
-      { name: 'Alimentación', type: 'expense', icon: '🛒', user_id: userId },
-      { name: 'Transporte', type: 'expense', icon: '🚗', user_id: userId },
-      { name: 'Servicios', type: 'expense', icon: '💡', user_id: userId },
-      { name: 'Entretenimiento', type: 'expense', icon: '🎬', user_id: userId },
-      { name: 'Salud', type: 'expense', icon: '🏥', user_id: userId },
-      { name: 'Shopping', type: 'expense', icon: '🛍️', user_id: userId },
-      { name: 'Educación', type: 'expense', icon: '📚', user_id: userId },
-      { name: 'Otros Gastos', type: 'expense', icon: '📦', user_id: userId },
-    ]
-
-    await supabase.from('categories').insert(defaultCategories)
   }
 
   const handleSubmit = async (e) => {
@@ -137,32 +140,25 @@ export default function Auth({ showResetPasswordForm, setShowResetPasswordForm }
 
         if (signInError) throw signInError
 
+        setAttempts(0)
+        setCooldown(0)
+
         if (!data.user) {
           setError('Usuario no encontrado')
           setLoading(false)
           return
         }
       } else {
-        const { data: existingUsers, error: checkError } = await supabase
-          .from('users')
-          .select('id')
-          .eq('email', email.trim())
-          .limit(1)
-
-        if (checkError) throw checkError
-
-        if (existingUsers && existingUsers.length > 0) {
-          setError('Este correo electrónico ya está registrado')
-          setLoading(false)
-          return
-        }
-
         const { data, error: signUpError } = await supabase.auth.signUp({
           email: email.trim(),
           password,
         })
 
-        if (signUpError) throw signUpError
+        if (signUpError) {
+          setError('No se pudo completar el registro. Intenta de nuevo más tarde.')
+          setLoading(false)
+          return
+        }
 
         if (data.user) {
           const { error: insertError } = await supabase
@@ -180,6 +176,14 @@ export default function Auth({ showResetPasswordForm, setShowResetPasswordForm }
     } catch (err) {
       console.error('Auth error:', err)
       setError(err.message || 'Error de conexión. Intenta de nuevo.')
+
+      const newAttempts = attempts + 1
+      setAttempts(newAttempts)
+
+      if (newAttempts >= MAX_ATTEMPTS) {
+        const waitTime = getCooldownTime(newAttempts)
+        setCooldown(waitTime)
+      }
     }
 
     setLoading(false)
@@ -331,8 +335,14 @@ export default function Auth({ showResetPasswordForm, setShowResetPasswordForm }
 
           {error && <div className="auth-error">{error}</div>}
 
-          <button type="submit" className="auth-submit" disabled={loading}>
-            {loading ? 'Cargando...' : (isLogin ? 'Iniciar Sesión' : 'Crear Cuenta')}
+          <button type="submit" className="auth-submit" disabled={loading || cooldown > 0}>
+            {cooldown > 0
+              ? `Espera ${cooldown}s...`
+              : loading
+                ? `Cargando...`
+                : isLogin
+                  ? 'Iniciar sesión'
+                  : 'Crear Cuenta'}
           </button>
         </form>
 
