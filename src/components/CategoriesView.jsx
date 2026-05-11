@@ -57,7 +57,9 @@ export default function CategoriesView({
         {categoryMessage && (
           <div className="success-message">{categoryMessage}</div>
         )}
-
+          <div className='form-group'>
+            <label>Tipo de Categoria</label>
+        </div>
         <div className="category-type-toggle" ref={toggleRef}>
           <div
             className="toggle-slider"
@@ -67,6 +69,7 @@ export default function CategoriesView({
               boxShadow: `0 2px 8px ${colors.shadow}, inset 0 1px 0 rgba(255,255,255,0.2)`,
             }}
           />
+          
           <button
             className={`toggle-btn income ${newCategoryType === "income" ? "active" : ""}`}
             onClick={() => setNewCategoryType("income")}
